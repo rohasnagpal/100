@@ -1,12 +1,14 @@
-# Indian Law 100 — Legal AI Micro-Case Benchmark
+# Indian Law 100: Legal AI Micro-Case Benchmark
 
-Indian Law 100 is a browser-based benchmark for measuring how accurately an AI model applies Indian law to concrete facts. It contains 100 self-contained micro cases across 13 legal domains, three difficulty tiers, and deliberate traps for outdated or repealed law.
+Indian Law 100 is a browser-based benchmark for measuring how accurately an AI model applies Indian law to concrete facts. It contains 100 self-contained micro cases across 13 legal domains, 3 difficulty tiers, and deliberate traps for outdated or repealed law.
+
+<img width="2838" height="2022" alt="image" src="https://github.com/user-attachments/assets/02b604c3-2f74-411a-aefb-ea96f47fc735" />
 
 Each answer is evaluated on the legal outcome, governing authority, and quality of application. Results can be reviewed and overridden by a human, exported as auditable JSON, and published to a comparative leaderboard.
 
 The benchmark runner is intentionally self-contained: the complete case battery, UI, OpenRouter integration, scoring workflow, recovery logic, and export code are embedded in `index.html`.
 
-> **Legal-content notice:** The questions and gold answers were supplied by the benchmark maintainer. Codex and GPT-5.6 assisted with software development and data-structure validation, but did not independently verify every legal proposition. A qualified Indian-law expert should review the battery before scores are treated as public claims about model quality.
+> **Legal-content notice:** The questions and gold answers were supplied by Rohas Nagpal, the benchmark maintainer. Codex and GPT-5.6 assisted with software development and data-structure validation, but did not independently verify every legal proposition. 
 
 ## Built with Codex and GPT-5.6
 
