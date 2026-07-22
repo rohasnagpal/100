@@ -99,7 +99,7 @@ These labels are convenience bands. The complete axis scores remain in the expor
 7. The score and explanation appear beside the answer.
 8. The user can override any of the three scoring axes or use a correct, partial, or incorrect preset.
 9. After all 100 cases have grades, the user finalises the run and downloads its JSON.
-10. If the user has an authorised ROHAS admin session, the same JSON is also saved to `results/` and becomes available to the leaderboard.
+10. If the user is signed in as this installation’s administrator, the same JSON is saved to `results/` and becomes available to its leaderboard.
 
 The tested model is instructed to answer in no more than 180 words using three labelled parts: **Outcome**, **Legal basis**, and **Reasoning**.
 
@@ -176,7 +176,12 @@ The API key is deliberately separate from the benchmark record. It is stored in 
 
 ```text
 micro-case-benchmark-india/
+├── .gitignore             Excludes local configuration and generated results
 ├── README.md              Project documentation
+├── admin.php              Standalone administrator login and logout
+├── admin-status.php       Login status and CSRF-token endpoint for the runner
+├── bootstrap.php          Shared configuration, session, auth, and CSRF helpers
+├── config.example.php     Safe configuration template
 ├── index.html             Self-contained benchmark runner and 100-case dataset
 ├── leaderboard.php        Result scanner, ranking, charts, and run archive
 ├── save-result.php        Authenticated validation and JSON save endpoint
@@ -197,30 +202,56 @@ Requirements:
 From the website root:
 
 ```bash
+cp config.example.php config.php
+php -r "echo password_hash('choose-a-strong-password', PASSWORD_DEFAULT), PHP_EOL;"
+```
+
+Paste the generated hash into `admin_password_hash` in `config.php`, then start PHP:
+
+```bash
 php -S 127.0.0.1:8000
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:8000/micro-case-benchmark-india/index.html
+http://127.0.0.1:8000/index.html
 ```
 
-The runner can display and export results without an authenticated site session. Adding results to the server leaderboard requires the existing ROHAS admin session described below.
+The runner can run models and export results without authentication. To publish a completed run to this installation’s leaderboard, open `http://127.0.0.1:8000/admin.php`, log in with the password used to create the hash, return to the runner, and finalise the run.
+
+`config.php` and generated `results/*.json` files are ignored by Git. Each clone therefore has its own administrator credentials and independent leaderboard.
+
+### Environment-variable setup
+
+Containers and managed hosting can configure authentication without creating `config.php`:
+
+```bash
+export INDIAN_LAW_100_ADMIN_PASSWORD_HASH='your-password-hash'
+php -S 127.0.0.1:8000
+```
+
+For local development only, `INDIAN_LAW_100_ADMIN_PASSWORD` also accepts a plain-text password. A password hash is recommended for production.
+
+## Standalone publishing flow
+
+1. A server owner deploys the repository and configures their own administrator password.
+2. Anyone can use an OpenRouter API key in their browser to run the benchmark and download auditable JSON.
+3. Only the signed-in administrator can publish a completed run to that server.
+4. `save-result.php` validates the request and writes a uniquely named JSON file to `results/`.
+5. `leaderboard.php` discovers the file automatically and updates that installation’s ranking.
+
+Installations are independent. Publishing on one server does not submit a result to the maintainer’s or another installation’s leaderboard.
 
 ## Production deployment
 
 1. Serve the folder from a PHP-capable HTTPS website.
 2. Ensure the PHP process can create and write files inside `results/`.
-3. Integrate the existing administrator login so an authorised session contains:
-
-   ```php
-   $_SESSION['rohas_admin'] = true;
-   ```
-
-4. Confirm that the parent site’s Content Security Policy permits requests to OpenRouter and any required Google Fonts assets.
-5. Run a controlled test with a low-cost model before starting a full 100-case benchmark.
-6. Back up finalised JSON files and review them before making public comparative claims.
+3. Copy `config.example.php` to the untracked `config.php` and set a strong `admin_password_hash`, or provide `INDIAN_LAW_100_ADMIN_PASSWORD_HASH` through the hosting environment.
+4. Confirm that PHP sessions and cookies work over HTTPS. The application uses an HTTP-only, SameSite=Lax session cookie and expires administrator access after 12 hours of inactivity by default.
+5. Confirm that the site’s Content Security Policy permits requests to OpenRouter and any required Google Fonts assets.
+6. Log in at `admin.php`, run a controlled test with a low-cost model, and confirm the JSON appears in `results/` and on `leaderboard.php`.
+7. Back up finalised JSON files and review them before making public comparative claims.
 
 The browser calls OpenRouter directly. This design keeps the API key away from the website server, but it means the site must be delivered in an environment where browser-to-OpenRouter requests are permitted.
 
@@ -255,7 +286,7 @@ The export does **not** contain the OpenRouter API key or an Authorization heade
 
 ## Server-side result validation
 
-`save-result.php` accepts only authenticated `POST` requests and enforces:
+`save-result.php` accepts only same-origin, CSRF-protected `POST` requests from the standalone administrator session and enforces:
 
 - benchmark ID `indian-law-100` and version `1.0`;
 - finalised status and timestamp;
@@ -264,7 +295,8 @@ The export does **not** contain the OpenRouter API key or an Authorization heade
 - a unique non-empty case ID for every result;
 - all three numeric scoring axes;
 - axis bounds of 50, 30, and 20;
-- an overall percentage between 0 and 100; and
+- an overall percentage between 0 and 100;
+- agreement between the submitted summary and the 10,000 points calculated from all grades; and
 - rejection of fields named `api_key`, `apikey`, or `authorization`.
 
 Accepted files receive a timestamped, randomised filename and are written with a lock to `results/`.
@@ -355,7 +387,7 @@ Do not silently alter gold answers after public scores exist. Publish a new benc
 - Confirmed the 40 easy, 40 medium, and 20 hard distribution.
 - Confirmed 13 explicit trap cases.
 - Compared the embedded cases with the supplied source records for exact equality.
-- Ran PHP syntax checks on both PHP files.
+- Ran PHP syntax checks on the standalone authentication, saving, and leaderboard PHP files.
 - Loaded the runner and leaderboard in a browser and checked the console.
 - Tested grouped model loading and setup readiness.
 - Simulated an interrupted run, refreshed the page, and verified IndexedDB restoration and resume state.
@@ -364,4 +396,3 @@ Do not silently alter gold answers after public scores exist. Publish a new benc
 ## Responsible use
 
 This benchmark is a research and evaluation tool. It is not legal advice, a substitute for professional review, or evidence that a model is safe for unsupervised legal practice. Scores should be interpreted alongside the dataset version, judge model, generation settings, failure logs, manual overrides, and the scope of the 100 cases.
-

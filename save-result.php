@@ -1,13 +1,15 @@
 <?php
 declare(strict_types=1);
 
-session_start();
+require __DIR__ . '/bootstrap.php';
+benchmark_start_session();
 
 function respond(array $data, int $status): void
 {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
     echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -16,10 +18,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respond(array('ok' => false, 'error' => 'POST required.'), 405);
 }
 
-// Reuse the existing ROHAS admin session so public visitors cannot write fake
-// leaderboard entries. The browser still downloads a local JSON without login.
-if (empty($_SESSION['rohas_admin'])) {
-    respond(array('ok' => false, 'error' => 'ROHAS admin login required for server save.'), 403);
+if (!benchmark_admin_configured()) {
+    respond(array('ok' => false, 'error' => 'Server administrator authentication is not configured.'), 503);
+}
+if (!benchmark_is_admin()) {
+    respond(array('ok' => false, 'error' => 'Administrator login required for server save.'), 403);
+}
+if (!benchmark_csrf_valid($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null)) {
+    respond(array('ok' => false, 'error' => 'Invalid or expired security token. Refresh and try again.'), 403);
 }
 
 $contentLength = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
@@ -30,6 +36,9 @@ if ($contentLength > 2_500_000) {
 $raw = file_get_contents('php://input');
 if ($raw === false || trim($raw) === '') {
     respond(array('ok' => false, 'error' => 'Empty request body.'), 400);
+}
+if (strlen($raw) > 2_500_000) {
+    respond(array('ok' => false, 'error' => 'Result exceeds the 2.5 MB limit.'), 413);
 }
 
 $payload = json_decode($raw, true);
@@ -51,6 +60,7 @@ if (!isset($payload['results']) || !is_array($payload['results']) || count($payl
 }
 
 $caseIds = array();
+$calculatedPoints = 0.0;
 foreach ($payload['results'] as $result) {
     $caseId = is_array($result) ? (string) ($result['case_id'] ?? '') : '';
     $grade = is_array($result) ? ($result['final_grade'] ?? null) : null;
@@ -62,12 +72,20 @@ foreach ($payload['results'] as $result) {
         if (!isset($grade[$axis]) || !is_numeric($grade[$axis]) || (float) $grade[$axis] < 0 || (float) $grade[$axis] > $maximum) {
             respond(array('ok' => false, 'error' => 'Every final grade must contain all three numeric scoring axes.'), 400);
         }
+        $calculatedPoints += (float) $grade[$axis];
     }
 }
 
 $percentage = (float) $payload['summary']['percentage'];
 if (!is_finite($percentage) || $percentage < 0 || $percentage > 100) {
     respond(array('ok' => false, 'error' => 'Invalid percentage.'), 400);
+}
+$expectedPercentage = round(($calculatedPoints / 10_000) * 100, 1);
+$summaryPoints = (float) ($payload['summary']['points'] ?? -1);
+$summaryMax = (float) ($payload['summary']['max'] ?? -1);
+$summaryGraded = (int) ($payload['summary']['graded'] ?? -1);
+if (abs($summaryPoints - $calculatedPoints) > 0.001 || abs($summaryMax - 10_000) > 0.001 || $summaryGraded !== 100 || abs($percentage - $expectedPercentage) > 0.001) {
+    respond(array('ok' => false, 'error' => 'Summary scores do not match the 100 submitted grades.'), 400);
 }
 
 // Refuse accidental secret persistence even if the client schema changes later.

@@ -1,0 +1,4 @@
+config.php
+results/*.json
+!results/.gitkeep
+.DS_Store

@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+require __DIR__ . '/bootstrap.php';
+benchmark_start_session();
+
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -138,6 +141,8 @@ foreach ($models as $model) {
     }
 }
 $averageTrap = $trapModels ? $averageTrap / $trapModels : 0;
+$adminConfigured = benchmark_admin_configured();
+$adminLoggedIn = benchmark_is_admin();
 ?>
 <!doctype html>
 <html lang="en">
@@ -163,7 +168,7 @@ $averageTrap = $trapModels ? $averageTrap / $trapModels : 0;
   </style>
 </head>
 <body>
-  <header class="topbar"><div class="shell"><a class="brand" href="index.html"><span class="mark">IL</span><span>Indian Law 100</span></a><nav class="nav"><a href="../legal-ai-benchmarking-using-rohas.php">Methodology</a><a href="index.html">Run benchmark</a></nav></div></header>
+  <header class="topbar"><div class="shell"><a class="brand" href="index.html"><span class="mark">IL</span><span>Indian Law 100</span></a><nav class="nav"><a href="index.html">Run benchmark</a><a href="admin.php?next=leaderboard.php"><?php echo $adminLoggedIn ? 'Admin ✓' : 'Admin'; ?></a></nav></div></header>
   <main><div class="shell">
     <section class="hero"><div class="wordmark" aria-hidden="true"><span>1</span><span>0</span><span>0</span></div><div class="eyebrow">Latest finalised run per model</div><h1>Legal AI <em>Leaderboard</em></h1><p>Ranked by total rubric score. Domain, difficulty, trap performance, cost, and the original auditable JSON remain visible.</p></section>
 
@@ -174,12 +179,18 @@ $averageTrap = $trapModels ? $averageTrap / $trapModels : 0;
       <div class="stat"><span>Average trap accuracy</span><b><?php echo h(number_format($averageTrap, 0)); ?>%</b></div>
     </section>
 
-    <div class="notice"><strong>Prototype leaderboard:</strong> the current runner contains three illustrative cases. Treat these scores as interface tests, not public claims about model quality.</div>
+    <?php if (!$adminConfigured): ?>
+      <div class="notice"><strong>Setup required:</strong> configure an administrator password before this installation can publish benchmark results. See <code>config.example.php</code> and the README.</div>
+    <?php elseif ($adminLoggedIn): ?>
+      <div class="notice"><strong>Administrator signed in:</strong> completed runs can be saved to this installation’s leaderboard.</div>
+    <?php else: ?>
+      <div class="notice"><strong>Independent leaderboard:</strong> results shown here were published by this server’s administrator. Anyone may run the benchmark and download an auditable JSON copy.</div>
+    <?php endif; ?>
 
     <section class="card">
       <div class="card-head"><div><h2>Model ranking</h2><p class="hint">Only each model’s most recently finalised run is ranked. Ties favour lower estimated cost.</p></div><span class="badge"><?php echo count($runs); ?> finalised run<?php echo count($runs) === 1 ? '' : 's'; ?></span></div>
       <?php if (!$models): ?>
-        <div class="empty"><b>No finalised scores yet</b>Run the 100-case benchmark, review all grades, and finalise it while logged into ROHAS admin.<br><a class="btn" href="index.html">Run the benchmark</a></div>
+        <div class="empty"><b>No finalised scores yet</b>Run the 100-case benchmark, review all grades, and finalise it while logged in as this server’s administrator.<br><a class="btn" href="index.html">Run the benchmark</a></div>
       <?php else: ?>
         <div class="leader-grid">
           <?php foreach ($models as $index => $model): ?>
