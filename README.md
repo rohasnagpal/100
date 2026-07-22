@@ -10,34 +10,6 @@ The benchmark runner is intentionally self-contained: the complete case battery,
 
 > **Legal-content notice:** The questions and gold answers were supplied by Rohas Nagpal, the benchmark maintainer. Codex and GPT-5.6 assisted with software development and data-structure validation, but did not independently verify every legal proposition. 
 
-## Built with Codex and GPT-5.6
-
-This project was developed with **Codex**, using **GPT-5.6** as the coding and reasoning model during the implementation workflow.
-
-Codex provided the working environment for inspecting the existing website, editing the project, running local checks, and testing the interface in a real browser. GPT-5.6 was used within that workflow to reason through the benchmark architecture, translate the product brief into working code, harden failure handling, and prepare documentation.
-
-### Specific contributions
-
-| Area | How Codex and GPT-5.6 were used |
-|---|---|
-| Product architecture | Converted the benchmark concept into a browser runner, scoring pipeline, JSON result format, PHP save endpoint, and leaderboard. |
-| Interface development | Recreated the visual language of the existing legal-AI projects and built the responsive three-column answer, gold-answer, and verdict layout. |
-| Dataset integration | Parsed three supplied JSON arrays, verified 100 unique IDs, checked domain and difficulty totals, and embedded the records without changing their substantive text. |
-| OpenRouter integration | Implemented the live model catalogue, provider-grouped selector, pricing display, streaming answers, API-key controls, credit checking, and generation settings. |
-| Judge reliability | Designed the 50/30/20 grading request, strict JSON Schema, response-healing request, tolerant parser, automatic retry, and human-override fallback. |
-| Recovery engineering | Implemented IndexedDB checkpoints, legacy-draft migration, interrupted-run restoration, and continuation from the first ungraded case. |
-| Result integrity | Added finalised-result validation, secret-field rejection, unique-case checks, scoring bounds, admin-only server saves, and auditable JSON output. |
-| Quality assurance | Used PHP linting, source-fidelity checks, browser console inspection, responsive UI review, and simulated interruption/reload tests. |
-| Documentation | Produced and refined this README and the in-product explanations for model settings and benchmark behavior. |
-
-### What the AI tools did not do
-
-- They did not create or independently certify the supplied legal gold answers.
-- They did not replace expert legal review or human benchmark governance.
-- They did not submit benchmark scores to the leaderboard.
-- They did not store or receive a user’s OpenRouter API key outside the browser workflow.
-- They are not benchmark participants unless their corresponding model is deliberately selected through OpenRouter.
-
 ## Benchmark composition
 
 | Domain | Cases |
@@ -398,3 +370,31 @@ Do not silently alter gold answers after public scores exist. Publish a new benc
 ## Responsible use
 
 This benchmark is a research and evaluation tool. It is not legal advice, a substitute for professional review, or evidence that a model is safe for unsupervised legal practice. Scores should be interpreted alongside the dataset version, judge model, generation settings, failure logs, manual overrides, and the scope of the 100 cases.
+
+## Built with Codex and GPT-5.6
+
+This project was developed with **Codex**, using **GPT-5.6** as the coding and reasoning model during the implementation workflow.
+
+Codex provided the working environment for inspecting the existing website, editing the project, running local checks, and testing the interface in a real browser. GPT-5.6 was used within that workflow to reason through the benchmark architecture, translate the product brief into working code, harden failure handling, and prepare documentation.
+
+### Specific contributions
+
+| Area | How Codex and GPT-5.6 were used |
+|---|---|
+| Product architecture | Converted the benchmark concept into a browser runner, scoring pipeline, JSON result format, PHP save endpoint, and leaderboard. |
+| Interface development | Recreated the visual language of the existing legal-AI projects and built the responsive three-column answer, gold-answer, and verdict layout. |
+| Dataset integration | Parsed three supplied JSON arrays, verified 100 unique IDs, checked domain and difficulty totals, and embedded the records without changing their substantive text. |
+| OpenRouter integration | Implemented the live model catalogue, provider-grouped selector, pricing display, streaming answers, API-key controls, credit checking, and generation settings. |
+| Judge reliability | Designed the 50/30/20 grading request, strict JSON Schema, response-healing request, tolerant parser, automatic retry, and human-override fallback. |
+| Recovery engineering | Implemented IndexedDB checkpoints, legacy-draft migration, interrupted-run restoration, and continuation from the first ungraded case. |
+| Result integrity | Added finalised-result validation, secret-field rejection, unique-case checks, scoring bounds, admin-only server saves, and auditable JSON output. |
+| Quality assurance | Used PHP linting, source-fidelity checks, browser console inspection, responsive UI review, and simulated interruption/reload tests. |
+| Documentation | Produced and refined this README and the in-product explanations for model settings and benchmark behavior. |
+
+### What the AI tools did not do
+
+- They did not create or independently certify the supplied legal gold answers.
+- They did not replace expert legal review or human benchmark governance.
+- They did not submit benchmark scores to the leaderboard.
+- They did not store or receive a user’s OpenRouter API key outside the browser workflow.
+- They are not benchmark participants unless their corresponding model is deliberately selected through OpenRouter.
