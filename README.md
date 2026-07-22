@@ -156,9 +156,11 @@ The runner checkpoints:
 - before and after judging;
 - after manual overrides;
 - when the page becomes hidden or is being unloaded; and
-- at the end of a complete, partial, failed, or cancelled run.
+- at the end of a complete, partial, failed, or paused run.
 
 After a refresh, the UI restores the model, judge, generation settings, answers, grades, errors, usage, cost, and progress. The button changes to **Resume benchmark**.
+
+**Pause** stops the active request but preserves the run for later resumption. **Discard run** is the permanent option: after confirmation it aborts any active request, deletes the IndexedDB and local-storage draft, and removes all answers, grades, and progress from the browser.
 
 When resuming:
 

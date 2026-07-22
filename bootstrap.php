@@ -78,7 +78,8 @@ function benchmark_admin_configured(): bool
     $config = benchmark_config();
     $hash = trim((string) ($config['admin_password_hash'] ?? ''));
     $hashInfo = $hash !== '' ? password_get_info($hash) : array();
-    return ($hash !== '' && ($hashInfo['algo'] ?? null) !== null) || isset($config['admin_password']);
+    $bcryptHash = preg_match('/^\$2[aby]\$(?:0[4-9]|[12][0-9]|3[01])\$[.\/A-Za-z0-9]{53}$/D', $hash) === 1;
+    return ($hash !== '' && (($hashInfo['algo'] ?? null) !== null || $bcryptHash)) || isset($config['admin_password']);
 }
 
 function benchmark_password_matches(string $password): bool
